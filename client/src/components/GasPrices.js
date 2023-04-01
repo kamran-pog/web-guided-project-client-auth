@@ -1,22 +1,42 @@
-import React from 'react';
-import moment from 'moment';
-import Loader from 'react-loader-spinner';
+import React from "react";
+import moment from "moment";
+import Loader from "react-loader-spinner";
+import axios from "axios";
+import { axiosWithAuth } from "../util/axiosWithAuth";
 
 class GasPrices extends React.Component {
   state = {
-    gasPrices: []
+    gasPrices: [],
   };
-  
+
+  componentDidMount() {
+    this.getData();
+  }
+
+  getData = () => {
+    axiosWithAuth()
+      .get("http://localhost:5001/api/data")
+      .then((res) => {
+        this.setState({
+          gasPrices: res.data.data.filter(
+            (price) =>
+              price.type === "Gasoline - Regular" &&
+              (price.location === "US" || price.location === "State of Hawaii")
+          ),
+        });
+      })
+      .catch((err) => console.log(err.error));
+  };
 
   formatData = () => {
     const formattedData = [];
     this.state.gasPrices.forEach((price, index, arr) => {
-      if (price.location === 'US') {
+      if (price.location === "US") {
         formattedData.push({
           id: index,
-          date: moment(price.date).format('MMM'),
+          date: moment(price.date).format("MMM"),
           USPrice: price.price,
-          HawaiiPrice: arr[index + 1].price
+          HawaiiPrice: arr[index + 1].price,
         });
       }
     });
@@ -60,7 +80,7 @@ class GasPrices extends React.Component {
                 <div className="year">2012</div>
               </div>
               <div>
-                {gasPrices.map(price => (
+                {gasPrices.map((price) => (
                   <div key={price.id} className="price-graph">
                     <div className="date">
                       <p>{price.date}</p>
@@ -69,7 +89,7 @@ class GasPrices extends React.Component {
                       <div
                         className="hawaii-line"
                         style={{
-                          width: `${(Number(price.HawaiiPrice) / 5) * 100}%`
+                          width: `${(Number(price.HawaiiPrice) / 5) * 100}%`,
                         }}
                       />
                       <p>${price.HawaiiPrice}</p>
@@ -78,7 +98,7 @@ class GasPrices extends React.Component {
                       <div
                         className="us-line"
                         style={{
-                          width: `${(Number(price.USPrice) / 5) * 100}%`
+                          width: `${(Number(price.USPrice) / 5) * 100}%`,
                         }}
                       >
                         <p>${price.USPrice}</p>
